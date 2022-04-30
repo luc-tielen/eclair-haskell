@@ -1,0 +1,2 @@
+module Language.Eclair
+  () where
