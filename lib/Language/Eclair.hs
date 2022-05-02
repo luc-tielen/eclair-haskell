@@ -135,45 +135,6 @@ class Marshal a => Fact a where
 class Program a where
   type ProgramFacts a :: [Type]
 
-{-
-@def edge(u32, u32).
-@def path(u32, u32).
-
-reachable(x, y) :-
-  edge(x, y).
-
-reachable(x, z) :-
-  edge(x, y),
-  reachable(y, z).
--}
-
--- The facts
-
-data Edge
-  = Edge Int32 Int32
-  deriving (Generic)
-  deriving anyclass Marshal
-
-data Reachable
-  = Reachable Int32 Int32
-  deriving (Show, Generic)
-  deriving anyclass Marshal
-
-instance Fact Edge where
-  type FactDirection Edge = 'Input
-  factType = const 0
-
-instance Fact Reachable where
-  type FactDirection Reachable = 'Output
-  factType = const 1
-
--- The program
-
-data Path = Path
-
-instance Program Path where
-  type ProgramFacts Path = '[Edge, Reachable]
-
 newtype Handle prog = Handle (Ptr Eclair.Program)
 type role Handle nominal
 
@@ -190,36 +151,5 @@ withEclair _prog f = do
   program <- Eclair.init
   withForeignPtr program $ runEclairM . f . Handle
 
-exampleHighLevel :: IO ()
-exampleHighLevel = do
-  results <- withEclair Path $ \prog -> do
-    addFacts prog [Edge 1 2, Edge 2 3]
-    run prog
-    getFacts prog
-  process results
-  where
-    process :: [Reachable] -> IO ()
-    process = traverse_ print
-
-
-
--- example :: Fact a => a -> IO ()
--- example facts = do
---   program <- Eclair.init
---   withForeignPtr program $ \prog -> do
-    -- buffer <- mallocForeignPtrBytes _bytes  -- TODO: fill array
-    -- withForeignPtr buffer $ \buf -> do
-    --   Eclair.addFact prog _factType buf
-    --   Eclair.addFacts prog _factType buf _count
-
-    -- count <- Eclair.factCount prog _factType
-    -- results <- Eclair.getFacts prog _factType
-    -- withForeignPtr results $ \res -> do
-    --   for_ [0..count] $ \i -> do
-    --     -- TODO read from array
-    --     _
-
-
--- TODO: addFact(s): need to create a buffer ourselves!
 -- TODO use typesystem to avoid errors
 -- TODO derivingvia to hide all boilerplate
