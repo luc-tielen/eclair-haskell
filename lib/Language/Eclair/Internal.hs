@@ -17,7 +17,6 @@ import Data.Word
 import Control.Exception
 import qualified Language.Eclair.Internal.Bindings as Bindings
 
--- TODO move next code to Internal.hs
 
 init :: IO (ForeignPtr Bindings.Program)
 init = mask_ $ do
