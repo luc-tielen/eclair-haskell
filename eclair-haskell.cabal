@@ -20,8 +20,10 @@ extra-source-files:
 library
   exposed-modules:
       Language.Eclair
+      Language.Eclair.Class
       Language.Eclair.Internal
       Language.Eclair.Internal.Bindings
+      Language.Eclair.Marshal
   other-modules:
       Paths_eclair_haskell
   hs-source-dirs:
