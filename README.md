@@ -22,7 +22,7 @@ You can create the following Haskell program to bind to Eclair and serialize
 data back and forth between Haskell and Eclair:
 
 ```haskell
-{-# LANGUAGE DataKinds, DerivingVia #-}
+{-# LANGUAGE DataKinds, DeriveGeneric, DeriveAnyClass, DerivingVia #-}
 
 module Main ( main ) where
 
@@ -50,6 +50,7 @@ main :: IO ()
 main = do
   results <- E.withEclair Path $ \prog -> do
     E.addFacts prog [Edge 1 2, Edge 2 3]
+    E.addFact prog $ Edge 4 5
     E.run prog
     E.getFacts prog
   process results
