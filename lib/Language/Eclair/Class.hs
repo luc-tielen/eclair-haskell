@@ -52,7 +52,7 @@ instance Marshal a => Marshal (FactOptions a dir ty) where
 instance (KnownNat ty, Marshal a) => Fact (FactOptions a dir ty) where
   type FactDirection (FactOptions _ dir _) = dir
 
-  factType _ = fromIntegral $ natVal (Proxy @ty)
+  factType = const $ fromIntegral $ natVal (Proxy @ty)
 
 -- NOTE: this could be refactored into a type family right now, but later when
 -- we have multiple eclair programs we will need a typeclass anyway

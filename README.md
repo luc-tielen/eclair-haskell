@@ -22,27 +22,33 @@ You can create the following Haskell program to bind to Eclair and serialize
 data back and forth between Haskell and Eclair:
 
 ```haskell
+{-# LANGUAGE DataKinds, DerivingVia #-}
+
+module Main ( main ) where
+
+import qualified Language.Eclair as E
+
+-- NOTE: for now, the constants 0 and 1 needs to be looked up in the generated LLVM code
+
 data Edge
   = Edge Int32 Int32
   deriving (Generic)
-  deriving anyclass Marshal
+  deriving anyclass E.Marshal
+  deriving E.Fact via E.FactOptions Edge 'E.Input 0
 
 data Reachable
   = Reachable Int32 Int32
   deriving (Show, Generic)
-  deriving anyclass Marshal
+  deriving anyclass E.Marshal
+  deriving E.Fact via E.FactOptions Reachable 'E.Output 1
 
-instance Fact Edge where
-  type FactDirection Edge = 'Input
-  factType = const 0  -- NOTE: for now, these constants needs to be looked up in the generated LLVM code
+data Path = Path
+  deriving E.Program
+  via E.ProgramOptions Path '[Edge, Reachable]
 
-instance Fact Reachable where
-  type FactDirection Reachable = 'Output
-  factType = const 1
-
-example :: IO ()
-example = do
-  results <- withEclair Path $ \prog -> do
+main :: IO ()
+main = do
+  results <- E.withEclair Path $ \prog -> do
     E.addFacts prog [Edge 1 2, Edge 2 3]
     E.run prog
     E.getFacts prog
