@@ -34,7 +34,7 @@ data Reachable
 
 instance Fact Edge where
   type FactDirection Edge = 'Input
-  factType = const 0  -- NOTE: for now, these constants needs to be looked up in the general LLVM code
+  factType = const 0  -- NOTE: for now, these constants needs to be looked up in the generated LLVM code
 
 instance Fact Reachable where
   type FactDirection Reachable = 'Output
