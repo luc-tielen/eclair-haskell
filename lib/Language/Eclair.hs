@@ -54,7 +54,6 @@ instance MonadEclair EclairM where
       runMarshalM (serialize fact) buf
       Internal.addFact prog (factType (Proxy @a)) buf
 
-  -- TODO Fact a, ContainsFact a
   -- TODO make polymorphic over container
   getFacts :: forall prog a. (Fact a, ContainsOutputFact prog a)
            => Handle prog -> EclairM [a]

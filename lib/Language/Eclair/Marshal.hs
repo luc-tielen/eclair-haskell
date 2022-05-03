@@ -16,9 +16,7 @@ import Foreign.Storable
 import qualified Language.Eclair.Internal.Constraints as C
 import qualified Language.Eclair.Internal as Eclair
 
--- TODO: add type error if:
--- not a product type
--- unsupported type in record (for now only allow Int32)
+
 class Marshal a where
   serialize :: a -> MarshalM ()
   deserialize :: MarshalM a

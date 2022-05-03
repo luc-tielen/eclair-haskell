@@ -14,6 +14,12 @@ module Language.Eclair.Class
   , FactOptions(..)
   ) where
 
+import Control.Monad.Except
+import Control.Monad.RWS
+import Control.Monad.Reader
+import Control.Monad.Writer
+import qualified Control.Monad.State as Lazy
+import qualified Control.Monad.State.Strict as Strict
 import Data.Int
 import Data.Kind
 import Data.Proxy
@@ -66,20 +72,6 @@ type family FormatDirection (dir :: Direction) where
   FormatDirection 'Output = "output"
   FormatDirection 'Input = "input"
 
-class MonadEclair m where
-  type Handler m :: Type -> Type
-
-  addFacts :: forall prog f a. (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
-           => Handler m prog -> f a -> m ()
-
-  addFact :: forall prog a. (Fact a, ContainsInputFact prog a, Sized (Rep a))
-          => Handler m prog -> a -> m ()
-
-  getFacts :: forall prog a. (Fact a, ContainsOutputFact prog a)
-           => Handler m prog -> m [a]
-
-  run :: Handler m prog -> m ()
-
 data Direction
   = Input
   | Output
@@ -129,3 +121,66 @@ instance Sized a => Sized (K1 i a) where
 instance (Sized f, Sized g) => Sized (f :*: g) where
   toSize = const $
     toSize (Proxy @f) + toSize (Proxy @g)
+
+
+class Monad m => MonadEclair m where
+  type Handler m :: Type -> Type
+
+  addFacts :: forall prog f a. (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
+           => Handler m prog -> f a -> m ()
+
+  addFact :: forall prog a. (Fact a, ContainsInputFact prog a, Sized (Rep a))
+          => Handler m prog -> a -> m ()
+
+  getFacts :: forall prog a. (Fact a, ContainsOutputFact prog a)
+           => Handler m prog -> m [a]
+
+  run :: Handler m prog -> m ()
+
+instance MonadEclair m => MonadEclair (ReaderT r m) where
+  type Handler (ReaderT r m) = Handler m
+
+  addFacts h = lift . addFacts h
+  addFact h = lift . addFact h
+  getFacts = lift . getFacts
+  run = lift . run
+
+instance (Monoid w, MonadEclair m) => MonadEclair (WriterT w m) where
+  type Handler (WriterT w m) = Handler m
+
+  addFacts h = lift . addFacts h
+  addFact h = lift . addFact h
+  getFacts = lift . getFacts
+  run = lift . run
+
+instance MonadEclair m => MonadEclair (Strict.StateT s m) where
+  type Handler (Strict.StateT s m) = Handler m
+
+  addFacts h = lift . addFacts h
+  addFact h = lift . addFact h
+  getFacts = lift . getFacts
+  run = lift . run
+
+instance MonadEclair m => MonadEclair (Lazy.StateT s m) where
+  type Handler (Lazy.StateT s m) = Handler m
+
+  addFacts h = lift . addFacts h
+  addFact h = lift . addFact h
+  getFacts = lift . getFacts
+  run = lift . run
+
+instance (MonadEclair m, Monoid w) => MonadEclair (RWST r w s m) where
+  type Handler (RWST r w s m) = Handler m
+
+  addFacts h = lift . addFacts h
+  addFact h = lift . addFact h
+  getFacts = lift . getFacts
+  run = lift . run
+
+instance MonadEclair m => MonadEclair (ExceptT e m) where
+  type Handler (ExceptT e m) = Handler m
+
+  addFacts h = lift . addFacts h
+  addFact h = lift . addFact h
+  getFacts = lift . getFacts
+  run = lift . run
