@@ -87,6 +87,6 @@ executables:
     main:             Main.hs
     dependencies:
       - eclair-haskell
-    extra-lib-dirs: cbits
-    extra-libraries: path
+    extra-lib-dirs: cbits  # this assumes the library is stored under "cbits/"
+    extra-libraries: test
 ```
