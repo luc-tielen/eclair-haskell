@@ -23,6 +23,7 @@ library
       Language.Eclair.Class
       Language.Eclair.Internal
       Language.Eclair.Internal.Bindings
+      Language.Eclair.Internal.Constraints
       Language.Eclair.Marshal
   other-modules:
       Paths_eclair_haskell
@@ -48,6 +49,7 @@ library
     , containers ==0.*
     , mtl ==2.*
     , text ==1.*
+    , type-errors-pretty >=0.0.1.0 && <1
     , vector ==0.12.*
   default-language: Haskell2010
 
@@ -81,5 +83,6 @@ test-suite eclair-haskell-test
     , hspec-hedgehog ==0.*
     , mtl ==2.*
     , text ==1.*
+    , type-errors-pretty >=0.0.1.0 && <1
     , vector ==0.12.*
   default-language: Haskell2010

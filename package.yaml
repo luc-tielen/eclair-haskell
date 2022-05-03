@@ -17,6 +17,7 @@ dependencies:
   - vector == 0.12.*
   - containers == 0.*
   - mtl == 2.*
+  - type-errors-pretty >= 0.0.1.0 && < 1
 
 default-extensions:
   - OverloadedStrings

@@ -1,7 +1,8 @@
 {-# LANGUAGE TypeFamilies, TypeApplications, RoleAnnotations, InstanceSigs #-}
 
 module Language.Eclair
-  ( EclairM
+  ( module Language.Eclair.Class
+  , EclairM
   , Handle
   , withEclair
   ) where
@@ -64,6 +65,3 @@ instance MonadEclair EclairM where
 
   run (Handle prog) =
     EclairM $ Internal.run prog
-
--- TODO use typesystem to avoid errors
--- TODO derivingvia to hide all boilerplate

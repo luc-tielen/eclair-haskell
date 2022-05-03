@@ -13,7 +13,8 @@ import GHC.Generics
 import Data.Int
 import Foreign.Ptr
 import Foreign.Storable
-import Language.Eclair.Internal as Eclair  -- TODO: fix module hierarchy
+import qualified Language.Eclair.Internal.Constraints as C
+import qualified Language.Eclair.Internal as Eclair
 
 -- TODO: add type error if:
 -- not a product type
@@ -22,10 +23,10 @@ class Marshal a where
   serialize :: a -> MarshalM ()
   deserialize :: MarshalM a
 
-  default serialize :: (Generic a, GMarshal (Rep a)) => a -> MarshalM ()
+  default serialize :: (Generic a, C.SimpleProduct a, GMarshal (Rep a)) => a -> MarshalM ()
   serialize a = gserialize (from a)
 
-  default deserialize :: (Generic a, GMarshal (Rep a)) => MarshalM a
+  default deserialize :: (Generic a, C.SimpleProduct a, GMarshal (Rep a)) => MarshalM a
   deserialize = to <$> gdeserialize
 
 class GMarshal f where
