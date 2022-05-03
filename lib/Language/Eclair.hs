@@ -31,8 +31,16 @@ withEclair _prog f = do
   program <- Internal.init
   withForeignPtr program $ runEclairM . f . Handle
 
+class Collect c where
+  collect :: Marshal a => Int -> MarshalM (c a)
+
+instance Collect [] where
+  collect count =
+    replicateM count deserialize
+
 instance MonadEclair EclairM where
   type Handler EclairM = Handle
+  type CollectFacts EclairM = Collect
 
   addFacts :: forall prog f a. (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
            => Handle prog -> f a -> EclairM ()
@@ -54,15 +62,14 @@ instance MonadEclair EclairM where
       runMarshalM (serialize fact) buf
       Internal.addFact prog (factType (Proxy @a)) buf
 
-  -- TODO make polymorphic over container
-  getFacts :: forall prog a. (Fact a, ContainsOutputFact prog a)
-           => Handle prog -> EclairM [a]
+  getFacts :: forall prog a c. (Fact a, ContainsOutputFact prog a, Collect c)
+           => Handle prog -> EclairM (c a)
   getFacts (Handle prog) = EclairM $ do
     let ty = (factType (Proxy @a))
     count <- Internal.factCount prog ty
     buffer <- Internal.getFacts prog ty
     withForeignPtr buffer $ \buf ->
-      runMarshalM (replicateM (fromIntegral count) deserialize) buf
+      runMarshalM (collect (fromIntegral count)) buf
 
   run (Handle prog) =
     EclairM $ Internal.run prog

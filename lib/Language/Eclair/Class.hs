@@ -125,6 +125,7 @@ instance (Sized f, Sized g) => Sized (f :*: g) where
 
 class Monad m => MonadEclair m where
   type Handler m :: Type -> Type
+  type CollectFacts m :: (Type -> Type) -> Constraint
 
   addFacts :: forall prog f a. (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
            => Handler m prog -> f a -> m ()
@@ -132,13 +133,14 @@ class Monad m => MonadEclair m where
   addFact :: forall prog a. (Fact a, ContainsInputFact prog a, Sized (Rep a))
           => Handler m prog -> a -> m ()
 
-  getFacts :: forall prog a. (Fact a, ContainsOutputFact prog a)
-           => Handler m prog -> m [a]
+  getFacts :: forall prog a c. (Fact a, ContainsOutputFact prog a, CollectFacts m c)
+           => Handler m prog -> m (c a)
 
   run :: Handler m prog -> m ()
 
 instance MonadEclair m => MonadEclair (ReaderT r m) where
   type Handler (ReaderT r m) = Handler m
+  type CollectFacts (ReaderT r m) = CollectFacts m
 
   addFacts h = lift . addFacts h
   addFact h = lift . addFact h
@@ -147,6 +149,7 @@ instance MonadEclair m => MonadEclair (ReaderT r m) where
 
 instance (Monoid w, MonadEclair m) => MonadEclair (WriterT w m) where
   type Handler (WriterT w m) = Handler m
+  type CollectFacts (WriterT w m) = CollectFacts m
 
   addFacts h = lift . addFacts h
   addFact h = lift . addFact h
@@ -155,6 +158,7 @@ instance (Monoid w, MonadEclair m) => MonadEclair (WriterT w m) where
 
 instance MonadEclair m => MonadEclair (Strict.StateT s m) where
   type Handler (Strict.StateT s m) = Handler m
+  type CollectFacts (Strict.StateT s m) = CollectFacts m
 
   addFacts h = lift . addFacts h
   addFact h = lift . addFact h
@@ -163,6 +167,7 @@ instance MonadEclair m => MonadEclair (Strict.StateT s m) where
 
 instance MonadEclair m => MonadEclair (Lazy.StateT s m) where
   type Handler (Lazy.StateT s m) = Handler m
+  type CollectFacts (Lazy.StateT s m) = CollectFacts m
 
   addFacts h = lift . addFacts h
   addFact h = lift . addFact h
@@ -171,6 +176,7 @@ instance MonadEclair m => MonadEclair (Lazy.StateT s m) where
 
 instance (MonadEclair m, Monoid w) => MonadEclair (RWST r w s m) where
   type Handler (RWST r w s m) = Handler m
+  type CollectFacts (RWST r w s m) = CollectFacts m
 
   addFacts h = lift . addFacts h
   addFact h = lift . addFact h
@@ -179,8 +185,10 @@ instance (MonadEclair m, Monoid w) => MonadEclair (RWST r w s m) where
 
 instance MonadEclair m => MonadEclair (ExceptT e m) where
   type Handler (ExceptT e m) = Handler m
+  type CollectFacts (ExceptT e m) = CollectFacts m
 
   addFacts h = lift . addFacts h
   addFact h = lift . addFact h
   getFacts = lift . getFacts
   run = lift . run
+
