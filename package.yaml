@@ -15,6 +15,7 @@ dependencies:
   - base >= 4.7 && < 5
   - text == 1.*
   - vector == 0.12.*
+  - array <= 1.0
   - containers == 0.*
   - mtl == 2.*
   - type-errors-pretty >= 0.0.1.0 && < 1

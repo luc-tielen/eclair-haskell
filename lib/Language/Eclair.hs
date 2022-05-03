@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, TypeApplications, RoleAnnotations, InstanceSigs #-}
+{-# LANGUAGE TypeFamilies, TypeApplications, RoleAnnotations, InstanceSigs, BangPatterns #-}
 
 module Language.Eclair
   ( module Language.Eclair.Class
@@ -15,6 +15,11 @@ import Data.Foldable
 import qualified Language.Eclair.Internal as Internal
 import Foreign.ForeignPtr
 import Foreign.Ptr
+import qualified Data.Array as A
+import qualified Data.Array.IO as A
+import qualified Data.Array.Unsafe as A
+import qualified Data.Vector as V
+import qualified Data.Vector.Mutable as MV
 
 
 newtype Handle prog = Handle (Ptr Internal.Program)
@@ -37,6 +42,31 @@ class Collect c where
 instance Collect [] where
   collect count =
     replicateM count deserialize
+
+instance Collect V.Vector where
+  collect objCount = do
+    vm <- liftIO $ MV.unsafeNew objCount
+    collect' vm 0
+    where
+      collect' vec idx
+        | idx == objCount = liftIO $ V.unsafeFreeze vec
+        | otherwise = do
+          !obj <- deserialize
+          liftIO $ MV.write vec idx obj
+          collect' vec (idx + 1)
+
+instance Collect (A.Array Int) where
+  collect objCount = do
+    ma <- liftIO $ A.newArray_ (0, objCount - 1)
+    collect' ma 0
+    where
+      collect' :: Marshal a => A.IOArray Int a -> Int -> MarshalM (A.Array Int a)
+      collect' array idx
+        | idx == objCount = liftIO $ A.unsafeFreeze array
+        | otherwise = do
+          !obj <- deserialize
+          liftIO $ A.writeArray array idx obj
+          collect' array (idx + 1)
 
 instance MonadEclair EclairM where
   type Handler EclairM = Handle
