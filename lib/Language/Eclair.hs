@@ -34,8 +34,8 @@ withEclair _prog f = do
 instance MonadEclair EclairM where
   type Handler EclairM = Handle
 
--- TODO ContainsFact a
-  addFacts :: forall prog f a. (Foldable f, Fact a, Sized (Rep a)) => Handle prog -> f a -> EclairM ()
+  addFacts :: forall prog f a. (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
+           => Handle prog -> f a -> EclairM ()
   addFacts (Handle prog) facts = EclairM $ do
     let factCount = length facts
         bytesPerFact = toSize (Proxy @(Rep a))
@@ -45,7 +45,8 @@ instance MonadEclair EclairM where
       runMarshalM (traverse_ serialize facts) buf
       Internal.addFacts prog (factType (Proxy @a)) buf (fromIntegral factCount)
 
-  addFact :: forall prog a. (Fact a, Sized (Rep a)) => Handle prog -> a -> EclairM ()
+  addFact :: forall prog a. (Fact a, ContainsInputFact prog a, Sized (Rep a))
+          => Handle prog -> a -> EclairM ()
   addFact (Handle prog) fact = EclairM $ do
     let byteCount = toSize (Proxy @(Rep a))
     buffer <- mallocForeignPtrBytes byteCount
@@ -55,7 +56,8 @@ instance MonadEclair EclairM where
 
   -- TODO Fact a, ContainsFact a
   -- TODO make polymorphic over container
-  getFacts :: forall prog a. Fact a => Handle prog -> EclairM [a]
+  getFacts :: forall prog a. (Fact a, ContainsOutputFact prog a)
+           => Handle prog -> EclairM [a]
   getFacts (Handle prog) = EclairM $ do
     let ty = (factType (Proxy @a))
     count <- Internal.factCount prog ty

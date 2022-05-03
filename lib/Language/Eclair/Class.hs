@@ -1,7 +1,10 @@
-{-# LANGUAGE DataKinds, PolyKinds, TypeApplications, TypeOperators, TypeFamilies #-}
+{-# LANGUAGE DataKinds, PolyKinds, TypeApplications, TypeOperators, TypeFamilies, UndecidableInstances #-}
 
 module Language.Eclair.Class
   ( MonadEclair(..)
+  , ContainsOutputFact
+  , ContainsInputFact
+  , ContainsFact
   , Fact(..)
   , Direction(..)
   , Program(..)
@@ -18,16 +21,62 @@ import Data.Word
 import GHC.Generics
 import GHC.TypeLits
 import Language.Eclair.Marshal
+import Type.Errors.Pretty
 
+type family ContainsOutputFact prog fact :: Constraint where
+  ContainsOutputFact prog fact = (ContainsFact prog fact, IsOutput fact (FactDirection fact))
+
+type family ContainsInputFact prog fact :: Constraint where
+  ContainsInputFact prog fact = (ContainsFact prog fact, IsInput fact (FactDirection fact))
+
+type family ContainsFact prog fact :: Constraint where
+  ContainsFact prog fact =
+    CheckContains prog (ProgramFacts prog) fact
+
+type family CheckContains prog facts fact :: Constraint where
+  CheckContains prog '[] fact =
+    TypeError ("You tried to perform an action with a fact of type '" <> fact
+    <> "' for program '" <> prog <> "'."
+    % "The program contains the following facts: " <> ProgramFacts prog <> "."
+    % "It does not contain fact: " <> fact <> "."
+    % "You can fix this error by adding the type '" <> fact
+    <> "' to the ProgramFacts type in the Program instance for " <> prog <> ".")
+  CheckContains _ (a ': _) a = ()
+  CheckContains prog (_ ': as) b = CheckContains prog as b
+
+type family IsOutput (fact :: Type) (dir :: Direction) :: Constraint where
+  IsOutput _ 'Output = ()
+  IsOutput _ 'InputOutput = ()
+  IsOutput fact dir = TypeError
+    ( "You tried to use an " <> FormatDirection dir <> " fact of type " <> fact <> " as an output."
+    % "Possible solution: change the FactDirection of " <> fact
+      <> " to either 'Output' or 'InputOutput'."
+    )
+
+type family IsInput (fact :: Type) (dir :: Direction) :: Constraint where
+  IsInput _ 'Input = ()
+  IsInput _ 'InputOutput = ()
+  IsInput fact dir = TypeError
+    ( "You tried to use an " <> FormatDirection dir <> " fact of type " <> fact <> " as an input."
+    % "Possible solution: change the FactDirection of " <> fact
+      <> " to either 'Input' or 'InputOutput'."
+    )
+
+type family FormatDirection (dir :: Direction) where
+  FormatDirection 'Output = "output"
+  FormatDirection 'Input = "input"
 
 class MonadEclair m where
   type Handler m :: Type -> Type
 
-  addFacts :: forall prog f a. (Foldable f, Fact a, Sized (Rep a)) => Handler m prog -> f a -> m ()
+  addFacts :: forall prog f a. (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
+           => Handler m prog -> f a -> m ()
 
-  addFact :: forall prog a. (Fact a, Sized (Rep a)) => Handler m prog -> a -> m ()
+  addFact :: forall prog a. (Fact a, ContainsInputFact prog a, Sized (Rep a))
+          => Handler m prog -> a -> m ()
 
-  getFacts :: forall prog a. Fact a => Handler m prog -> m [a]
+  getFacts :: forall prog a. (Fact a, ContainsOutputFact prog a)
+           => Handler m prog -> m [a]
 
   run :: Handler m prog -> m ()
 
