@@ -80,7 +80,8 @@ instance MonadEclair EclairM where
         byteCount = factCount * bytesPerFact
     buffer <- mallocForeignPtrBytes byteCount
     withForeignPtr buffer $ \buf -> do
-      runMarshalM (traverse_ serialize facts) buf
+      let marshalState = MarshalState prog buf
+      runMarshalM (traverse_ serialize facts) marshalState
       Internal.addFacts prog (factType (Proxy @a)) buf (fromIntegral factCount)
 
   addFact :: forall prog a. (Fact a, ContainsInputFact prog a, Sized (Rep a))
@@ -89,7 +90,8 @@ instance MonadEclair EclairM where
     let byteCount = toSize (Proxy @(Rep a))
     buffer <- mallocForeignPtrBytes byteCount
     withForeignPtr buffer $ \buf -> do
-      runMarshalM (serialize fact) buf
+      let marshalState = MarshalState prog buf
+      runMarshalM (serialize fact) marshalState
       Internal.addFact prog (factType (Proxy @a)) buf
 
   getFacts :: forall prog a c. (Fact a, ContainsOutputFact prog a, Collect c)
@@ -98,8 +100,9 @@ instance MonadEclair EclairM where
     let ty = (factType (Proxy @a))
     count <- Internal.factCount prog ty
     buffer <- Internal.getFacts prog ty
-    withForeignPtr buffer $ \buf ->
-      runMarshalM (collect (fromIntegral count)) buf
+    withForeignPtr buffer $ \buf -> do
+      let marshalState = MarshalState prog buf
+      runMarshalM (collect (fromIntegral count)) marshalState
 
   run (Handle prog) =
     EclairM $ Internal.run prog

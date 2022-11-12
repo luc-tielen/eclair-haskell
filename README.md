@@ -68,11 +68,11 @@ As of right now, the Eclair compiler outputs LLVM IR code that still needs to be
 further compiled. With the LLVM toolchain, we can produce a library that GHC can
 link with.
 
-Follow the following steps (assuming `test.dl` contains your eclair program) to
+Follow the following steps (assuming `test.eclair` contains your eclair program) to
 generate a static archive containing the eclair program:
 
 ```bash
-$ eclairc test.dl > test.ll
+$ eclair compile test.eclair > test.ll
 $ clang -c test.ll  # generates test.o
 $ ar rcs libtest.a test.o
 ```

@@ -5,12 +5,14 @@ module Language.Eclair.Marshal
   , GMarshal(..)
   , runMarshalM
   , MarshalM
+  , MarshalState(..)
   , valueSize
   ) where
 
 import Control.Monad.State.Strict
 import GHC.Generics
 import Data.Word
+import qualified Data.Text as T
 import Foreign.Ptr
 import Foreign.Storable
 import qualified Language.Eclair.Internal.Constraints as C
@@ -46,31 +48,57 @@ instance GMarshal a => GMarshal (M1 i c a) where
   gserialize (M1 x) = gserialize x
   gdeserialize = M1 <$> gdeserialize
 
-newtype MarshalM a
-  = MarshalM (StateT (Ptr Eclair.Buffer) IO a)
-  deriving (Functor, Applicative, Monad, MonadIO, MonadState (Ptr Eclair.Buffer))
-  via StateT (Ptr Eclair.Buffer) IO
+data MarshalState
+  = MarshalState
+  { programPtr :: Ptr Eclair.Program
+  , bufPtr :: Ptr Eclair.Buffer
+  }
 
-runMarshalM :: MarshalM a -> Ptr Eclair.Buffer -> IO a
-runMarshalM (MarshalM m) = evalStateT m
+newtype MarshalM a
+  = MarshalM (StateT (MarshalState) IO a)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadState MarshalState)
+  via StateT MarshalState IO
+
+runMarshalM :: MarshalM a -> MarshalState -> IO a
+runMarshalM (MarshalM m) =
+  evalStateT m
 
 -- Every value in Eclair is 4 bytes
 valueSize :: Int
 valueSize = 4
 
+getBufPtr :: MarshalM (Ptr a)
+getBufPtr =
+  gets (castPtr . bufPtr)
+
+updateBufPtr :: Ptr Eclair.Buffer -> MarshalM ()
+updateBufPtr pointer =
+  modify' $ \s -> s { bufPtr = pointer }
+
 writeAsBytes :: (Storable a, Marshal a) => a -> MarshalM ()
 writeAsBytes a = do
-  ptr <- gets castPtr
+  ptr <- getBufPtr
   liftIO $ poke ptr a
-  put $ ptr `plusPtr` valueSize
+  updateBufPtr (ptr `plusPtr` valueSize)
 
 readAsBytes :: (Storable a, Marshal a) => MarshalM a
 readAsBytes = do
-  ptr <- gets castPtr
+  ptr <- getBufPtr
   a <- liftIO $ peek ptr
-  put $ ptr `plusPtr` valueSize
+  updateBufPtr (ptr `plusPtr` valueSize)
   pure a
 
 instance Marshal Word32 where
   serialize = writeAsBytes
   deserialize = readAsBytes
+
+instance Marshal T.Text where
+  serialize str = do
+    prog <- gets programPtr
+    index <- liftIO $ Eclair.encodeString prog str
+    serialize index
+
+  deserialize = do
+    prog <- gets programPtr
+    index <- deserialize
+    liftIO $ Eclair.decodeString prog index

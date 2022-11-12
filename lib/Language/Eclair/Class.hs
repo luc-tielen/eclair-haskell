@@ -22,6 +22,7 @@ import qualified Control.Monad.State as Lazy
 import qualified Control.Monad.State.Strict as Strict
 import Data.Word
 import Data.Kind
+import Data.Text
 import Data.Proxy
 import GHC.Generics
 import GHC.TypeLits
@@ -80,7 +81,7 @@ class Marshal a => Fact a where
   type FactDirection a :: Direction
 
   -- TODO: is there a way to remove this and become auto-generated?
-  factType :: Proxy a -> Word16
+  factType :: Proxy a -> Word32
 
 newtype FactOptions a (dir :: Direction) (ty :: Nat)
   = FactOptions a
@@ -109,6 +110,9 @@ class Sized (a :: k) where
   toSize :: Proxy a -> Int
 
 instance Sized Word32 where
+  toSize = const valueSize
+
+instance Sized Text where
   toSize = const valueSize
 
 instance Sized a => Sized (M1 i c a) where

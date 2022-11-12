@@ -3,18 +3,19 @@
 module Language.Eclair.Internal.Constraints
   ( SimpleProduct
   , ProductLike
-  , OnlyWord32Fields
-  , Word32Field
+  , OnlySimpleFields
+  , SimpleField
   ) where
 
 import Type.Errors.Pretty
 import GHC.Generics
 import Data.Kind
 import Data.Word
+import qualified Data.Text as T
 
 
 type family SimpleProduct (a :: Type) :: Constraint where
-  SimpleProduct a = (ProductLike a (Rep a), OnlyWord32Fields a (Rep a))
+  SimpleProduct a = (ProductLike a (Rep a), OnlySimpleFields a (Rep a))
 
 type family ProductLike (t :: Type) (f :: Type -> Type) :: Constraint where
   ProductLike t (_ :*: b) = ProductLike t b
@@ -30,14 +31,15 @@ type family ProductLike (t :: Type) (f :: Type -> Type) :: Constraint where
     TypeError ( "Error while deriving marshalling code for type " <> t <> ":"
               % "Cannot derive void type.")
 
-type family OnlyWord32Fields (t :: Type) (f :: Type -> Type) :: Constraint where
-  OnlyWord32Fields t (a :*: b) = (OnlyWord32Fields t a, OnlyWord32Fields t b)
-  OnlyWord32Fields t (M1 _ _ a) = OnlyWord32Fields t a
-  OnlyWord32Fields t (K1 _ a) = Word32Field t a
-  OnlyWord32Fields _ U1 = ()
-  OnlyWord32Fields _ V1 = ()
+type family OnlySimpleFields (t :: Type) (f :: Type -> Type) :: Constraint where
+  OnlySimpleFields t (a :*: b) = (OnlySimpleFields t a, OnlySimpleFields t b)
+  OnlySimpleFields t (M1 _ _ a) = OnlySimpleFields t a
+  OnlySimpleFields t (K1 _ a) = SimpleField t a
+  OnlySimpleFields _ U1 = ()
+  OnlySimpleFields _ V1 = ()
 
-type family Word32Field (t :: Type) (a :: Type) :: Constraint where
-  Word32Field _ Word32 = ()
-  Word32Field t a =
-    TypeError ("Can only marshal values of Word32, but found '" <> a <> "' instead.")
+type family SimpleField (t :: Type) (a :: Type) :: Constraint where
+  SimpleField _ Word32 = ()
+  SimpleField _ T.Text = ()
+  SimpleField t a =
+    TypeError ("Can only marshal values of type Text and Word32, but found '" <> a <> "' instead.")
