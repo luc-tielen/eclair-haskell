@@ -67,5 +67,6 @@ decodeString prog index = do
     else do
       len <- peek (castPtr symbolPtr :: Ptr Word32)
       let utf8Ptr = symbolPtr `plusPtr` 4
-      bs <- BSU.unsafePackCStringLen (utf8Ptr, fromIntegral len)
+      stringPtr <- peek (castPtr utf8Ptr :: Ptr (Ptr CChar))
+      bs <- BSU.unsafePackCStringLen (stringPtr, fromIntegral len)
       pure $ TE.decodeUtf8 bs
