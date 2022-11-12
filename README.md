@@ -31,19 +31,17 @@ module Main ( main ) where
 import qualified Language.Eclair as E
 import GHC.Generics
 
--- NOTE: for now, the constants 0 and 1 needs to be looked up in the generated LLVM code
-
 data Edge
   = Edge Word32 Word32
   deriving (Generic)
   deriving anyclass E.Marshal
-  deriving E.Fact via E.FactOptions Edge 'E.Input 0
+  deriving E.Fact via E.FactOptions Edge 'E.Input "edge"
 
 data Reachable
   = Reachable Word32 Word32
   deriving (Show, Generic)
   deriving anyclass E.Marshal
-  deriving E.Fact via E.FactOptions Reachable 'E.Output 1
+  deriving E.Fact via E.FactOptions Reachable 'E.Output "reachable"
 
 data Path = Path
   deriving E.Program

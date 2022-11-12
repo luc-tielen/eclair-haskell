@@ -80,20 +80,19 @@ data Direction
 class Marshal a => Fact a where
   type FactDirection a :: Direction
 
-  -- TODO: is there a way to remove this and become auto-generated?
-  factType :: Proxy a -> Word32
+  factName :: Proxy a -> Text
 
-newtype FactOptions a (dir :: Direction) (ty :: Nat)
+newtype FactOptions a (dir :: Direction) (name :: Symbol)
   = FactOptions a
 
 instance Marshal a => Marshal (FactOptions a dir ty) where
   serialize (FactOptions a) = serialize a
   deserialize = FactOptions <$> deserialize
 
-instance (KnownNat ty, Marshal a) => Fact (FactOptions a dir ty) where
+instance (KnownSymbol name, Marshal a) => Fact (FactOptions a dir name) where
   type FactDirection (FactOptions _ dir _) = dir
 
-  factType = const $ fromIntegral $ natVal (Proxy @ty)
+  factName = const $ pack $ symbolVal (Proxy @name)
 
 -- NOTE: this could be refactored into a type family right now, but later when
 -- we have multiple eclair programs we will need a typeclass anyway
