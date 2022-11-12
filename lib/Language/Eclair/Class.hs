@@ -20,10 +20,9 @@ import Control.Monad.Reader
 import Control.Monad.Writer
 import qualified Control.Monad.State as Lazy
 import qualified Control.Monad.State.Strict as Strict
-import Data.Int
+import Data.Word
 import Data.Kind
 import Data.Proxy
-import Data.Word
 import GHC.Generics
 import GHC.TypeLits
 import Language.Eclair.Marshal
@@ -109,7 +108,7 @@ instance Program (ProgramOptions a facts) where
 class Sized (a :: k) where
   toSize :: Proxy a -> Int
 
-instance Sized Int32 where
+instance Sized Word32 where
   toSize = const valueSize
 
 instance Sized a => Sized (M1 i c a) where

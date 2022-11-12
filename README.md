@@ -34,13 +34,13 @@ import GHC.Generics
 -- NOTE: for now, the constants 0 and 1 needs to be looked up in the generated LLVM code
 
 data Edge
-  = Edge Int32 Int32
+  = Edge Word32 Word32
   deriving (Generic)
   deriving anyclass E.Marshal
   deriving E.Fact via E.FactOptions Edge 'E.Input 0
 
 data Reachable
-  = Reachable Int32 Int32
+  = Reachable Word32 Word32
   deriving (Show, Generic)
   deriving anyclass E.Marshal
   deriving E.Fact via E.FactOptions Reachable 'E.Output 1
@@ -83,10 +83,10 @@ for a build that makes use of `hpack`:
 ```yaml
 executables:
   eclair-example:
-    source-dirs:      src
-    main:             Main.hs
+    source-dirs: src
+    main: Main.hs
     dependencies:
       - eclair-haskell
-    extra-lib-dirs: cbits  # this assumes the library is stored under "cbits/"
+    extra-lib-dirs: cbits # this assumes the library is stored under "cbits/"
     extra-libraries: test
 ```

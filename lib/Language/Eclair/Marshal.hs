@@ -10,7 +10,7 @@ module Language.Eclair.Marshal
 
 import Control.Monad.State.Strict
 import GHC.Generics
-import Data.Int
+import Data.Word
 import Foreign.Ptr
 import Foreign.Storable
 import qualified Language.Eclair.Internal.Constraints as C
@@ -71,6 +71,6 @@ readAsBytes = do
   put $ ptr `plusPtr` valueSize
   pure a
 
-instance Marshal Int32 where
+instance Marshal Word32 where
   serialize = writeAsBytes
   deserialize = readAsBytes
