@@ -1,23 +1,23 @@
-{-# LANGUAGE TypeOperators, DefaultSignatures #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Language.Eclair.Marshal
-  ( Marshal(..)
-  , GMarshal(..)
+  ( Marshal (..)
+  , GMarshal (..)
   , runMarshalM
   , MarshalM
-  , MarshalState(..)
+  , MarshalState (..)
   , valueSize
   ) where
 
 import Control.Monad.State.Strict
-import GHC.Generics
-import Data.Word
 import qualified Data.Text as T
+import Data.Word
 import Foreign.Ptr
 import Foreign.Storable
-import qualified Language.Eclair.Internal.Constraints as C
+import GHC.Generics
 import qualified Language.Eclair.Internal as Eclair
-
+import qualified Language.Eclair.Internal.Constraints as C
 
 class Marshal a where
   serialize :: a -> MarshalM ()
@@ -48,16 +48,16 @@ instance GMarshal a => GMarshal (M1 i c a) where
   gserialize (M1 x) = gserialize x
   gdeserialize = M1 <$> gdeserialize
 
-data MarshalState
-  = MarshalState
+data MarshalState = MarshalState
   { programPtr :: Ptr Eclair.Program
   , bufPtr :: Ptr Eclair.Buffer
   }
 
 newtype MarshalM a
   = MarshalM (StateT (MarshalState) IO a)
-  deriving (Functor, Applicative, Monad, MonadIO, MonadState MarshalState)
-  via StateT MarshalState IO
+  deriving
+    (Functor, Applicative, Monad, MonadIO, MonadState MarshalState)
+    via StateT MarshalState IO
 
 runMarshalM :: MarshalM a -> MarshalState -> IO a
 runMarshalM (MarshalM m) =
@@ -73,7 +73,7 @@ getBufPtr =
 
 updateBufPtr :: Ptr Eclair.Buffer -> MarshalM ()
 updateBufPtr pointer =
-  modify' $ \s -> s { bufPtr = pointer }
+  modify' $ \s -> s{bufPtr = pointer}
 
 writeAsBytes :: (Storable a, Marshal a) => a -> MarshalM ()
 writeAsBytes a = do

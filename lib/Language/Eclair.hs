@@ -1,4 +1,8 @@
-{-# LANGUAGE TypeFamilies, TypeApplications, RoleAnnotations, InstanceSigs, BangPatterns #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE RoleAnnotations #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Language.Eclair
   ( module Language.Eclair.Class
@@ -7,28 +11,27 @@ module Language.Eclair
   , withEclair
   ) where
 
-import Language.Eclair.Class
 import Control.Monad.State.Strict
-import GHC.Generics
-import Data.Proxy
-import Data.Foldable
-import qualified Language.Eclair.Internal as Internal
-import Foreign.ForeignPtr
-import Foreign.Ptr
 import qualified Data.Array as A
 import qualified Data.Array.IO as A
 import qualified Data.Array.Unsafe as A
+import Data.Foldable
+import Data.Proxy
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as MV
-
+import Foreign.ForeignPtr
+import Foreign.Ptr
+import GHC.Generics
+import Language.Eclair.Class
+import qualified Language.Eclair.Internal as Internal
 
 newtype Handle prog = Handle (Ptr Internal.Program)
 type role Handle nominal
 
-newtype EclairM a
-  = EclairM { runEclairM :: IO a }
-  deriving (Functor, Applicative, Monad)
-  via IO
+newtype EclairM a = EclairM {runEclairM :: IO a}
+  deriving
+    (Functor, Applicative, Monad)
+    via IO
 
 -- NOTE: program variable is currently only used on the type level
 withEclair :: Program prog => prog -> (Handle prog -> EclairM a) -> IO a
@@ -51,9 +54,9 @@ instance Collect V.Vector where
       collect' vec idx
         | idx == objCount = liftIO $ V.unsafeFreeze vec
         | otherwise = do
-          !obj <- deserialize
-          liftIO $ MV.write vec idx obj
-          collect' vec (idx + 1)
+            !obj <- deserialize
+            liftIO $ MV.write vec idx obj
+            collect' vec (idx + 1)
 
 instance Collect (A.Array Int) where
   collect objCount = do
@@ -64,16 +67,20 @@ instance Collect (A.Array Int) where
       collect' array idx
         | idx == objCount = liftIO $ A.unsafeFreeze array
         | otherwise = do
-          !obj <- deserialize
-          liftIO $ A.writeArray array idx obj
-          collect' array (idx + 1)
+            !obj <- deserialize
+            liftIO $ A.writeArray array idx obj
+            collect' array (idx + 1)
 
 instance MonadEclair EclairM where
   type Handler EclairM = Handle
   type CollectFacts EclairM = Collect
 
-  addFacts :: forall prog f a. (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
-           => Handle prog -> f a -> EclairM ()
+  addFacts
+    :: forall prog f a
+     . (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
+    => Handle prog
+    -> f a
+    -> EclairM ()
   addFacts (Handle prog) facts = EclairM $ do
     let factCount = length facts
         bytesPerFact = toSize (Proxy @(Rep a))
@@ -86,8 +93,12 @@ instance MonadEclair EclairM where
       factType <- Internal.encodeString prog name
       Internal.addFacts prog factType buf (fromIntegral factCount)
 
-  addFact :: forall prog a. (Fact a, ContainsInputFact prog a, Sized (Rep a))
-          => Handle prog -> a -> EclairM ()
+  addFact
+    :: forall prog a
+     . (Fact a, ContainsInputFact prog a, Sized (Rep a))
+    => Handle prog
+    -> a
+    -> EclairM ()
   addFact (Handle prog) fact = EclairM $ do
     let byteCount = toSize (Proxy @(Rep a))
     buffer <- mallocForeignPtrBytes byteCount
@@ -98,8 +109,11 @@ instance MonadEclair EclairM where
       factType <- Internal.encodeString prog name
       Internal.addFact prog factType buf
 
-  getFacts :: forall prog a c. (Fact a, ContainsOutputFact prog a, Collect c)
-           => Handle prog -> EclairM (c a)
+  getFacts
+    :: forall prog a c
+     . (Fact a, ContainsOutputFact prog a, Collect c)
+    => Handle prog
+    -> EclairM (c a)
   getFacts (Handle prog) = EclairM $ do
     let name = factName (Proxy @a)
     factType <- Internal.encodeString prog name

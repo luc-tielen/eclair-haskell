@@ -11,19 +11,18 @@ module Language.Eclair.Internal
   , decodeString
   ) where
 
-import Prelude hiding (init)
+import Control.Exception
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Unsafe as BSU
+import Data.Text (Text)
+import qualified Data.Text.Encoding as TE
+import Data.Word
 import Foreign.C.Types
 import Foreign.ForeignPtr
 import Foreign.Ptr
 import Foreign.Storable
-import Data.Word
-import Data.Text (Text)
-import qualified Data.Text.Encoding as TE
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Unsafe as BSU
-import Control.Exception
 import qualified Language.Eclair.Internal.Bindings as Bindings
-
+import Prelude hiding (init)
 
 init :: IO (ForeignPtr Bindings.Program)
 init = mask_ $ do
