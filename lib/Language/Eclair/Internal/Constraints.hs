@@ -7,7 +7,7 @@ module Language.Eclair.Internal.Constraints
   , SimpleField
   ) where
 
-import Type.Errors.Pretty
+import GHC.TypeLits
 import GHC.Generics
 import Data.Kind
 import Data.Word
@@ -22,14 +22,14 @@ type family ProductLike (t :: Type) (f :: Type -> Type) :: Constraint where
   ProductLike t (M1 _ _ a) = ProductLike t a
   ProductLike _ (K1 _ _) = ()
   ProductLike t (_ :+: _) =
-    TypeError ( "Error while deriving marshalling code for type " <> t <> ":"
-              % "Cannot derive sum type, only product types are supported.")
+    TypeError ( 'Text "Error while deriving marshalling code for type " ':<>: 'ShowType t ':<>: 'Text ":"
+          ':$$: 'Text "Cannot derive sum type, only product types are supported.")
   ProductLike t U1 =
-    TypeError ( "Error while deriving marshalling code for type " <> t <> ":"
-              % "Cannot automatically derive code for 0 argument constructor.")
+    TypeError ( 'Text "Error while deriving marshalling code for type " ':<>: 'ShowType t ':<>: 'Text ":"
+          ':$$: 'Text "Cannot automatically derive code for 0 argument constructor.")
   ProductLike t V1 =
-    TypeError ( "Error while deriving marshalling code for type " <> t <> ":"
-              % "Cannot derive void type.")
+    TypeError ( 'Text "Error while deriving marshalling code for type " ':<>: 'ShowType t ':<>: 'Text ":"
+          ':$$: 'Text "Cannot derive void type.")
 
 type family OnlySimpleFields (t :: Type) (f :: Type -> Type) :: Constraint where
   OnlySimpleFields t (a :*: b) = (OnlySimpleFields t a, OnlySimpleFields t b)
@@ -42,4 +42,4 @@ type family SimpleField (t :: Type) (a :: Type) :: Constraint where
   SimpleField _ Word32 = ()
   SimpleField _ T.Text = ()
   SimpleField t a =
-    TypeError ("Can only marshal values of type Text and Word32, but found '" <> a <> "' instead.")
+    TypeError ('Text "Can only marshal values of type Text and Word32, but found '" ':<>: 'ShowType a ':<>: 'Text "' instead.")

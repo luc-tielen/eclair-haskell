@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.7.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -10,7 +10,7 @@ category:       Bindings
 homepage:       https://github.com/luc-tielen/eclair-haskell
 author:         Luc Tielen
 maintainer:     luc.tielen@gmail.com
-copyright:      Luc Tielen, 2022
+copyright:      Luc Tielen, 2023
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -47,11 +47,10 @@ library
   build-depends:
       array <=1.0
     , base >=4.7 && <5
-    , bytestring ==0.10.*
+    , bytestring ==0.11.*
     , containers ==0.*
     , mtl ==2.*
     , text ==1.*
-    , type-errors-pretty >=0.0.1.0 && <1
     , vector ==0.12.*
   default-language: Haskell2010
 
@@ -81,12 +80,11 @@ test-suite eclair-haskell-test
   build-depends:
       array <=1.0
     , base >=4.7 && <5
-    , bytestring ==0.10.*
+    , bytestring ==0.11.*
     , containers ==0.*
     , hspec >=2.6.1 && <3.0.0
     , hspec-hedgehog ==0.*
     , mtl ==2.*
     , text ==1.*
-    , type-errors-pretty >=0.0.1.0 && <1
     , vector ==0.12.*
   default-language: Haskell2010

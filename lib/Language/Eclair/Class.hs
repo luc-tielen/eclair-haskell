@@ -27,7 +27,6 @@ import Data.Proxy
 import GHC.Generics
 import GHC.TypeLits
 import Language.Eclair.Marshal
-import Type.Errors.Pretty
 
 type family ContainsOutputFact prog fact :: Constraint where
   ContainsOutputFact prog fact = (ContainsFact prog fact, IsOutput fact (FactDirection fact))
@@ -41,12 +40,12 @@ type family ContainsFact prog fact :: Constraint where
 
 type family CheckContains prog facts fact :: Constraint where
   CheckContains prog '[] fact =
-    TypeError ("You tried to perform an action with a fact of type '" <> fact
-    <> "' for program '" <> prog <> "'."
-    % "The program contains the following facts: " <> ProgramFacts prog <> "."
-    % "It does not contain fact: " <> fact <> "."
-    % "You can fix this error by adding the type '" <> fact
-    <> "' to the ProgramFacts type in the Program instance for " <> prog <> ".")
+    TypeError ('Text "You tried to perform an action with a fact of type '" ':<>: 'ShowType fact
+    ':<>: 'Text "' for program '" ':<>: 'ShowType prog ':<>: 'Text "'."
+    ':$$: 'Text "The program contains the following facts: " ':<>: 'ShowType (ProgramFacts prog) ':<>: 'Text "."
+    ':$$: 'Text "It does not contain fact: " ':<>: 'ShowType fact ':<>: 'Text "."
+    ':$$: 'Text "You can fix this error by adding the type '" ':<>: 'ShowType fact
+    ':<>: 'Text "' to the ProgramFacts type in the Program instance for " ':<>: 'ShowType prog ':<>: 'Text ".")
   CheckContains _ (a ': _) a = ()
   CheckContains prog (_ ': as) b = CheckContains prog as b
 
@@ -54,18 +53,20 @@ type family IsOutput (fact :: Type) (dir :: Direction) :: Constraint where
   IsOutput _ 'Output = ()
   IsOutput _ 'InputOutput = ()
   IsOutput fact dir = TypeError
-    ( "You tried to use an " <> FormatDirection dir <> " fact of type " <> fact <> " as an output."
-    % "Possible solution: change the FactDirection of " <> fact
-      <> " to either 'Output' or 'InputOutput'."
+    ( 'Text "You tried to use an " ':<>: 'ShowType (FormatDirection dir)
+      ':<>: 'Text " fact of type " ':<>: 'ShowType fact ':<>: 'Text " as an output."
+    ':$$: 'Text "Possible solution: change the FactDirection of " ':<>: 'ShowType fact
+      ':<>: 'Text " to either 'Output' or 'InputOutput'."
     )
 
 type family IsInput (fact :: Type) (dir :: Direction) :: Constraint where
   IsInput _ 'Input = ()
   IsInput _ 'InputOutput = ()
   IsInput fact dir = TypeError
-    ( "You tried to use an " <> FormatDirection dir <> " fact of type " <> fact <> " as an input."
-    % "Possible solution: change the FactDirection of " <> fact
-      <> " to either 'Input' or 'InputOutput'."
+    ( 'Text "You tried to use an " ':<>: 'ShowType (FormatDirection dir)
+      ':<>: 'Text " fact of type " ':<>: 'ShowType fact ':<>: 'Text " as an input."
+    ':$$: 'Text "Possible solution: change the FactDirection of " ':<>: 'ShowType fact
+      ':<>: 'Text " to either 'Input' or 'InputOutput'."
     )
 
 type family FormatDirection (dir :: Direction) where
