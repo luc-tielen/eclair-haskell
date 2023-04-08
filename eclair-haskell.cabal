@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.35.2.
 --
 -- see: https://github.com/sol/hpack
 
@@ -50,8 +50,8 @@ library
     , bytestring ==0.11.*
     , containers ==0.*
     , mtl ==2.*
-    , text ==1.*
-    , vector ==0.12.*
+    , text ==2.*
+    , vector ==0.13.*
   default-language: Haskell2010
 
 test-suite eclair-haskell-test
@@ -85,6 +85,6 @@ test-suite eclair-haskell-test
     , hspec >=2.6.1 && <3.0.0
     , hspec-hedgehog ==0.*
     , mtl ==2.*
-    , text ==1.*
-    , vector ==0.12.*
+    , text ==2.*
+    , vector ==0.13.*
   default-language: Haskell2010
