@@ -7,8 +7,8 @@ Haskell bindings for [Eclair Datalog](https://github.com/luc-tielen/eclair-lang.
 Given the following Eclair program:
 
 ```prolog
-@def edge(u32, u32).
-@def path(u32, u32).
+@def edge(u32, u32) input.
+@def path(u32, u32) output.
 
 path(x, y) :-
   edge(x, y).
