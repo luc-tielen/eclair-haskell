@@ -51,7 +51,7 @@ library
     , containers ==0.*
     , mtl ==2.*
     , text ==2.*
-    , vector ==0.13.*
+    , vector >=0.12.0 && <1
   default-language: Haskell2010
 
 test-suite eclair-haskell-test
@@ -86,5 +86,5 @@ test-suite eclair-haskell-test
     , hspec-hedgehog ==0.*
     , mtl ==2.*
     , text ==2.*
-    , vector ==0.13.*
+    , vector >=0.12.0 && <1
   default-language: Haskell2010
