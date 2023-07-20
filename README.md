@@ -30,6 +30,8 @@ module Main ( main ) where
 
 import qualified Language.Eclair as E
 import GHC.Generics
+import Data.Word
+import Data.Foldable (traverse_)
 
 data Edge
   = Edge Word32 Word32
