@@ -19,6 +19,7 @@ dependencies:
   - array <= 1.0
   - containers == 0.*
   - mtl == 2.*
+  - profunctors == 5.*
 
 default-extensions:
   - OverloadedStrings
