@@ -4,6 +4,8 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE StandaloneKindSignatures #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 module Language.Eclair.Class
   ( MonadEclair (..)
@@ -13,7 +15,9 @@ module Language.Eclair.Class
   , Fact (..)
   , Direction (..)
   , Program (..)
-  , Sized (..)
+  , Sized
+  , ToSize(..)
+  , GetFields
   , module Language.Eclair.Marshal
   , ProgramOptions (..)
   , FactOptions (..)
@@ -129,25 +133,56 @@ newtype ProgramOptions (a :: Type) (facts :: [Type])
 instance Program (ProgramOptions a facts) where
   type ProgramFacts (ProgramOptions _ facts) = facts
 
-class Sized (a :: k) where
+type Sized a = ToSize (GetFields (Rep a))
+
+class ToSize (a :: k) where
   toSize :: Proxy a -> Int
 
-instance Sized Word32 where
+instance ToSize Word32 where
   toSize = const valueSize
+  {-# INLINEABLE toSize #-}
 
-instance Sized Text where
+instance ToSize Text where
   toSize = const valueSize
+  {-# INLINEABLE toSize #-}
 
-instance Sized a => Sized (M1 i c a) where
+instance ToSize a => ToSize (M1 i c a) where
   toSize = const $ toSize (Proxy @a)
+  {-# INLINEABLE toSize #-}
 
-instance Sized a => Sized (K1 i a) where
+instance ToSize a => ToSize (K1 i a) where
   toSize = const $ toSize (Proxy @a)
+  {-# INLINEABLE toSize #-}
 
-instance (Sized f, Sized g) => Sized (f :*: g) where
-  toSize =
-    const $
-      toSize (Proxy @f) + toSize (Proxy @g)
+instance (ToSize f, ToSize g) => ToSize (f :*: g) where
+  toSize = const $ toSize (Proxy @f) + toSize (Proxy @g)
+  {-# INLINEABLE toSize #-}
+
+instance ToSize '[] where
+  toSize = const 0
+  {-# INLINABLE toSize #-}
+
+instance (ToSize a, ToSize as) => ToSize (a ': as) where
+  toSize = const $ toSize (Proxy @a) + toSize (Proxy @as)
+  {-# INLINABLE toSize #-}
+
+-- | A helper type family, for getting all directly marshallable fields of a type.
+type GetFields :: k -> [Type]
+type family GetFields a where
+  GetFields (K1 _ a) = DoGetFields a
+  GetFields (M1 _ _ a) = GetFields a
+  GetFields (f :*: g) = GetFields f ++ GetFields g
+
+type DoGetFields :: Type -> [Type]
+type family DoGetFields a where
+  DoGetFields Word32 = '[Word32]
+  DoGetFields Text = '[Text]
+  DoGetFields a = GetFields (Rep a)
+
+type (++) :: [Type] -> [Type] -> [Type]
+type family a ++ b where
+  '[] ++ b = b
+  (a ': as) ++ bs = a ': as ++ bs
 
 class Monad m => MonadEclair m where
   type Handler m :: Type -> Type
@@ -155,14 +190,14 @@ class Monad m => MonadEclair m where
 
   addFacts
     :: forall prog f a
-     . (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
+     . (Foldable f, Fact a, ContainsInputFact prog a, Sized a)
     => Handler m prog
     -> f a
     -> m ()
 
   addFact
     :: forall prog a
-     . (Fact a, ContainsInputFact prog a, Sized (Rep a))
+     . (Fact a, ContainsInputFact prog a, Sized a)
     => Handler m prog
     -> a
     -> m ()

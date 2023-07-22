@@ -71,19 +71,22 @@ instance Collect (A.Array Int) where
             liftIO $ A.writeArray array idx obj
             collect' array (idx + 1)
 
+toByteSize :: forall a. Sized a => Proxy a -> Int
+toByteSize _ = toSize (Proxy @(GetFields (Rep a)))
+
 instance MonadEclair EclairM where
   type Handler EclairM = Handle
   type CollectFacts EclairM = Collect
 
   addFacts
     :: forall prog f a
-     . (Foldable f, Fact a, ContainsInputFact prog a, Sized (Rep a))
+     . (Foldable f, Fact a, ContainsInputFact prog a, Sized a)
     => Handle prog
     -> f a
     -> EclairM ()
   addFacts (Handle prog) facts = EclairM $ do
     let factCount = length facts
-        bytesPerFact = toSize (Proxy @(Rep a))
+        bytesPerFact = toByteSize (Proxy @a)
         byteCount = factCount * bytesPerFact
     buffer <- mallocForeignPtrBytes byteCount
     withForeignPtr buffer $ \buf -> do
@@ -95,12 +98,12 @@ instance MonadEclair EclairM where
 
   addFact
     :: forall prog a
-     . (Fact a, ContainsInputFact prog a, Sized (Rep a))
+     . (Fact a, ContainsInputFact prog a, Sized a)
     => Handle prog
     -> a
     -> EclairM ()
   addFact (Handle prog) fact = EclairM $ do
-    let byteCount = toSize (Proxy @(Rep a))
+    let byteCount = toByteSize (Proxy @a)
     buffer <- mallocForeignPtrBytes byteCount
     withForeignPtr buffer $ \buf -> do
       let name = factName (Proxy @a)
