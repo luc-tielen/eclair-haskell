@@ -1,5 +1,4 @@
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DefaultSignatures, TypeOperators, TypeFamilies, DataKinds, UndecidableInstances #-}
 
 module Language.Eclair.Marshal
   ( Marshal (..)
@@ -13,20 +12,21 @@ module Language.Eclair.Marshal
 import Control.Monad.State.Strict
 import qualified Data.Text as T
 import Data.Word
+import Data.Kind
 import Foreign.Ptr
 import Foreign.Storable
 import GHC.Generics
+import GHC.TypeLits
 import qualified Language.Eclair.Internal as Eclair
-import qualified Language.Eclair.Internal.Constraints as C
 
 class Marshal a where
   serialize :: a -> MarshalM ()
   deserialize :: MarshalM a
 
-  default serialize :: (Generic a, C.SimpleProduct a, GMarshal (Rep a)) => a -> MarshalM ()
+  default serialize :: (Generic a, SimpleProduct a, GMarshal (Rep a)) => a -> MarshalM ()
   serialize a = gserialize (from a)
 
-  default deserialize :: (Generic a, C.SimpleProduct a, GMarshal (Rep a)) => MarshalM a
+  default deserialize :: (Generic a, SimpleProduct a, GMarshal (Rep a)) => MarshalM a
   deserialize = to <$> gdeserialize
 
 class GMarshal f where
@@ -54,7 +54,7 @@ data MarshalState = MarshalState
   }
 
 newtype MarshalM a
-  = MarshalM (StateT (MarshalState) IO a)
+  = MarshalM (StateT MarshalState IO a)
   deriving
     (Functor, Applicative, Monad, MonadIO, MonadState MarshalState)
     via StateT MarshalState IO
@@ -102,3 +102,38 @@ instance Marshal T.Text where
     prog <- gets programPtr
     index <- deserialize
     liftIO $ Eclair.decodeString prog index
+
+type family SimpleProduct (a :: Type) :: Constraint where
+  SimpleProduct a = (ProductLike a (Rep a), OnlyMarshallableFields (Rep a))
+
+type family ProductLike (t :: Type) (f :: Type -> Type) :: Constraint where
+  ProductLike t (_ :*: b) = ProductLike t b
+  ProductLike t (M1 _ _ a) = ProductLike t a
+  ProductLike _ (K1 _ _) = ()
+  ProductLike t (_ :+: _) =
+    TypeError
+      ( 'Text "Error while deriving marshalling code for type " ':<>: 'ShowType t ':<>: 'Text ":"
+          ':$$: 'Text "Cannot derive sum type, only product types are supported."
+      )
+  ProductLike t U1 =
+    TypeError
+      ( 'Text "Error while deriving marshalling code for type " ':<>: 'ShowType t ':<>: 'Text ":"
+          ':$$: 'Text "Cannot automatically derive code for 0 argument constructor."
+      )
+  ProductLike t V1 =
+    TypeError
+      ( 'Text "Error while deriving marshalling code for type " ':<>: 'ShowType t ':<>: 'Text ":"
+          ':$$: 'Text "Cannot derive void type."
+      )
+
+type family OnlyMarshallableFields (f :: (Type -> Type)) where
+  OnlyMarshallableFields (a :*: b) = (OnlyMarshallableFields a, OnlyMarshallableFields b)
+  OnlyMarshallableFields (a :+: b) = (OnlyMarshallableFields a, OnlyMarshallableFields b)
+  OnlyMarshallableFields (M1 _ _ a) = OnlyMarshallableFields a
+  OnlyMarshallableFields U1 = ()
+  OnlyMarshallableFields V1 = ()
+  OnlyMarshallableFields k = OnlyMarshallableField k
+
+type family OnlyMarshallableField (f :: (Type -> Type)) where
+  OnlyMarshallableField (M1 _ _ a) = OnlyMarshallableField a
+  OnlyMarshallableField (K1 _ a) = Marshal a

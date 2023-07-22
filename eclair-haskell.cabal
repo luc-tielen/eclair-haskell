@@ -25,7 +25,6 @@ library
       Language.Eclair.Class
       Language.Eclair.Internal
       Language.Eclair.Internal.Bindings
-      Language.Eclair.Internal.Constraints
       Language.Eclair.Marshal
   other-modules:
       Paths_eclair_haskell
