@@ -16,6 +16,7 @@ license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
+    cbits/eclair.c
 
 library
   exposed-modules:
@@ -45,6 +46,8 @@ library
       FlexibleInstances
       ScopedTypeVariables
   ghc-options: -Wall -fhide-source-paths -fno-show-valid-hole-fits -fno-sort-valid-hole-fits
+  c-sources:
+      cbits/eclair.c
   build-depends:
       array <=1.0
     , base >=4.7 && <5

@@ -10,6 +10,7 @@ copyright: Luc Tielen, 2023
 category: Bindings
 extra-source-files:
   - README.md
+  - cbits/eclair.c
 
 dependencies:
   - base >= 4.7 && < 5
@@ -44,6 +45,7 @@ ghc-options:
 
 library:
   source-dirs: lib
+  c-sources: cbits/*.c
 
 tests:
   eclair-haskell-test:
