@@ -1,0 +1,21 @@
+@def io(u32, string) input output.
+
+@def edge(u32, u32) input.
+@def reachable(u32, u32) output.
+
+@def edge_str(string, string) input.
+@def reachable_str(string, string) output.
+
+reachable(x, y) :-
+  edge(x, y).
+
+reachable(x, z) :-
+  edge(x, y),
+  reachable(y, z).
+
+reachable_str(x, y) :-
+  edge_str(x, y).
+
+reachable_str(x, z) :-
+  edge_str(x, y),
+  reachable_str(y, z).

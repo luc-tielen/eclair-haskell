@@ -1,9 +1,10 @@
 dist-newstyle/
 dist/
 .direnv/
-cabal.project.local*
+cabal.project.local~
 
 *.ll
+!/tests/fixtures/*.ll
 *.bc
 *.o
 *.s
