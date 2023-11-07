@@ -15,12 +15,14 @@ import Control.Exception
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as BSU
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Word
 import Foreign.C.Types
 import Foreign.ForeignPtr
 import Foreign.Ptr
 import Foreign.Storable
+import Foreign.C.String (peekCStringLen)
 import qualified Language.Eclair.Internal.Bindings as Bindings
 import Prelude hiding (init)
 
@@ -67,5 +69,12 @@ decodeString prog index = do
       len <- peek (castPtr symbolPtr :: Ptr Word32)
       let utf8Ptr = symbolPtr `plusPtr` 4
       stringPtr <- peek (castPtr utf8Ptr :: Ptr (Ptr CChar))
-      bs <- BSU.unsafePackCStringLen (stringPtr, fromIntegral len)
-      pure $ TE.decodeUtf8 bs
+      str <- peekCStringLen (stringPtr, fromIntegral len)
+      pure $ T.pack str
+
+      -- TODO use this implementation when we can newer bytestring version that is fixed
+      -- len <- peek (castPtr symbolPtr :: Ptr Word32)
+      -- let utf8Ptr = symbolPtr `plusPtr` 4
+      -- stringPtr <- peek (castPtr utf8Ptr :: Ptr (Ptr CChar))
+      -- bs <- BSU.unsafePackCStringLen (stringPtr, fromIntegral len)
+      -- pure $ TE.decodeUtf8 bs
