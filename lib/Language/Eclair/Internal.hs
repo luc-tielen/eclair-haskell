@@ -23,7 +23,6 @@ import Foreign.Ptr
 import Foreign.Storable
 import qualified Language.Eclair.Internal.Bindings as Bindings
 import Prelude hiding (init)
-import qualified Data.Text.Foreign as T
 
 init :: IO (ForeignPtr Bindings.Program)
 init = mask_ $ do
@@ -67,5 +66,6 @@ decodeString prog index = do
     else do
       len <- peek (castPtr symbolPtr :: Ptr Word32)
       let utf8Ptr = symbolPtr `plusPtr` 4
-      stringPtr <- peek (castPtr utf8Ptr :: Ptr (Ptr Word8))
-      T.fromPtr stringPtr (fromIntegral len)
+      stringPtr <- peek (castPtr utf8Ptr :: Ptr (Ptr CChar))
+      bs <- BSU.unsafePackCStringLen (stringPtr, fromIntegral len)
+      pure $ TE.decodeUtf8 bs
