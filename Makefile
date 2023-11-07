@@ -1,13 +1,13 @@
-configure:
-	@cabal configure --enable-tests
-
 build: configure
 	@cabal build
+
+configure:
+	@cabal configure --enable-tests
 
 clean:
 	@cabal clean
 
-test:
+test: build
 	@cabal run eclair-haskell-test
 
 .PHONY: configure build clean test
